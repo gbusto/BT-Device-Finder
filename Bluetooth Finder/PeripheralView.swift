@@ -19,15 +19,14 @@ struct PeripheralView: View {
             
     var body: some View {
         ZStack {
-            RssiView(rssi: $centralManager.targetRssi, rssiHelper: rssiHelper)
+            LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
             
             VStack {
-                Text("RSSI: \(rssiHelper.translateRssi(centralManager.targetRssi))")
-                    .foregroundColor(.black)
-                    .multilineTextAlignment(.center)
+                RssiView(rssi: $centralManager.targetRssi, rssiHelper: rssiHelper)
+                
                 PeripheralConnectionView(attemptedConnect: $centralManager.attemptedConnect,
                                          errorConnecting: $centralManager.errorConnecting)
-                .foregroundColor(.black)
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
             }
         }
@@ -63,6 +62,8 @@ struct RssiView: View {
     var rssiHelper: RssiHelper
     
     var body: some View {
-        Color(cgColor: rssiHelper.getColorFor(rssi))
+        Image(rssiHelper.getImageNameFor(rssi))
+            .resizable()
+            .aspectRatio(contentMode: .fit)
     }
 }

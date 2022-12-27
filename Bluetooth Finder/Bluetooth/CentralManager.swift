@@ -118,6 +118,26 @@ class CentralManager: NSObject, ObservableObject {
             print("[CentralManager] No timer found")
         }
     }
+    
+    func translateRssiSimple(_ rssi: Int) -> String {
+        if rssi >= -90 && rssi < -80 {
+            return "🔴"
+        }
+        
+        if rssi >= -80 && rssi < -65 {
+            return "🟠"
+        }
+        
+        if rssi >= -65 && rssi < -45 {
+            return "🟡"
+        }
+        
+        if rssi >= -45 && rssi <= -30 {
+            return "🟢"
+        }
+        
+        return "🚫"
+    }
 }
 
 extension CentralManager: CBPeripheralDelegate {

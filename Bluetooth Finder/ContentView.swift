@@ -17,15 +17,19 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
-                StateButton(state: $centralManager.isScanning,
-                            activeText: "Stop Scanning",
-                            inactiveText: "Start Scanning",
-                            action: updateScanState)
+            ZStack {
+                LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
                 
-                DevicesList(btManager: centralManager,
-                            _devices: $centralManager.devices,
-                            searchText: $searchText)
+                VStack {
+                    StateButton(state: $centralManager.isScanning,
+                                activeText: "Stop Scanning",
+                                inactiveText: "Start Scanning",
+                                action: updateScanState)
+                    
+                    DevicesList(btManager: centralManager,
+                                _devices: $centralManager.devices,
+                                searchText: $searchText)
+                }
             }
         }
         .onAppear {
@@ -53,41 +57,53 @@ struct DevicesList: View {
         ScrollView {
             ForEach(Array(_devices), id: \.self) { device in
                 if !searchText.isEmpty {
-                    let name = btManager.getPeripheralName(device)
-                    if name.contains(searchText) {
-                        DeviceView(btManager: btManager,
-                                   device: device,
-                                   textColor: .red)
-                        .padding()
+                    let name = btManager.getPeripheralName(device).lowercased()
+                    if name.contains(searchText.lowercased()) {
+                        DeviceRow(btManager: btManager,
+                                  device: device)
                     }
                 }
                 else {
-                    DeviceView(btManager: btManager,
-                               device: device,
-                               textColor: .red)
-                    .padding()
+                    DeviceRow(btManager: btManager,
+                              device: device)
                 }
             }
         }
         .padding()
-        .searchable(text: $searchText)
+        .searchable(text: $searchText, prompt: "Search by device name")
     }
 }
 
-struct DeviceView: View {
+struct DeviceRow: View {
     var btManager: CentralManager
     var device: CBPeripheral
-    var textColor: Color
     var maxStringLength: Int = 20
     
     var body: some View {
-        NavigationLink("Name: \(truncatedName(name: device.name ?? device.identifier.uuidString))",
-                       destination: PeripheralView(centralManager: btManager,
-                                                   peripheral: device))
-            .foregroundColor(.red)
+        NavigationLink(destination: PeripheralView(centralManager: btManager, peripheral: device)) {
+            ZStack {
+                Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
+                
+                HStack {
+                    Circle().foregroundColor(.random)
+                        .frame(maxHeight: 30)
+                    
+                    Spacer()
+                    
+                    Text("\(truncatedName(btManager.getPeripheralName(device)))")
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Text("\(btManager.translateRssiSimple(device.rssi?.intValue ?? 0))")
+                }
+                .padding()
+            }
+            .cornerRadius(15)
+        }
     }
     
-    func truncatedName(name: String) -> String {
+    func truncatedName(_ name: String) -> String {
         if name.count > maxStringLength {
             let start = name.startIndex
             let end = name.index(start, offsetBy: maxStringLength - 3)
@@ -122,6 +138,23 @@ struct AppButton: View {
         Button(text, action: action)
             .buttonStyle(.bordered)
             .foregroundColor(.blue)
+    }
+}
+
+extension Color {
+    public static var random: Color {
+        return Color(cgColor: CGColor(red: CGFloat.random(in: 0..<1),
+                                      green: CGFloat.random(in: 0..<1),
+                                      blue: CGFloat.random(in: 0..<1),
+                                      alpha: 1))
+    }
+    
+    public static var bgDark1: Color {
+        return Color(cgColor: CGColor(red: 0.08, green: 0.08, blue: 0.08, alpha: 1))
+    }
+    
+    public static var bgDark2: Color {
+        return Color(cgColor: CGColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 1))
     }
 }
 

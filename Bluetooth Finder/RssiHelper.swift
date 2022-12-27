@@ -20,6 +20,16 @@ struct RssiColor {
     }
 }
 
+struct RssiImage {
+    var min: Int
+    var max: Int
+    var imageName: String
+    
+    func isRssiInRange(_ rssi: Int) -> Bool {
+        return rssi <= max && rssi >= min
+    }
+}
+
 struct RssiHelper {
     /*
      Colors: cold to hot
@@ -54,6 +64,17 @@ struct RssiHelper {
         RssiColor(min: -38, max: -35, red: 0xb6, green: 0x22, blue: 0x03),
     ]
     
+    var images: [RssiImage] = [
+        RssiImage(min: -90, max: -85, imageName: "red-signal-1"),
+        RssiImage(min: -84, max: -80, imageName: "red-signal-2"),
+        RssiImage(min: -79, max: -72, imageName: "orange-signal-1"),
+        RssiImage(min: -71, max: -64, imageName: "orange-signal-2"),
+        RssiImage(min: -63, max: -58, imageName: "yellow-signal-1"),
+        RssiImage(min: -57, max: -52, imageName: "yellow-signal-2"),
+        RssiImage(min: -52, max: -46, imageName: "green-signal-1"),
+        RssiImage(min: -46, max: -30, imageName: "green-signal-2"),
+    ]
+    
     func getColorFor(_ rssi: Int) -> CGColor {
         for color in colors {
             if color.isRssiInRange(rssi) {
@@ -62,6 +83,16 @@ struct RssiHelper {
         }
         
         return CGColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+    }
+    
+    func getImageNameFor(_ rssi: Int) -> String {
+        for image in images {
+            if image.isRssiInRange(rssi) {
+                return image.imageName
+            }
+        }
+        
+        return "no-signal"
     }
     
     func translateRssi(_ rssi: Int) -> String {
@@ -91,4 +122,5 @@ struct RssiHelper {
         
         return "❌❌❌"
     }
+    
 }
