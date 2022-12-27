@@ -14,17 +14,21 @@ struct PeripheralView: View {
     @ObservedObject public var centralManager: CentralManager
     
     public var peripheral: CBPeripheral
-    
-    @State var backgroundColor: CGColor = CGColor(red: 0, green: 0, blue: 0, alpha: 1)
+        
+    var rssiHelper: RssiHelper = RssiHelper()
             
     var body: some View {
         ZStack {
-            Color(backgroundColor)
+            RssiView(rssi: $centralManager.targetRssi, rssiHelper: rssiHelper)
             
             VStack {
-                AppButton(text: "Read RSSI", action: readRssi)
-                
-                RssiView(rssi: $centralManager.targetRssi)
+                Text("RSSI: \(rssiHelper.translateRssi(centralManager.targetRssi))")
+                    .foregroundColor(.black)
+                    .multilineTextAlignment(.center)
+                PeripheralConnectionView(attemptedConnect: $centralManager.attemptedConnect,
+                                         errorConnecting: $centralManager.errorConnecting)
+                .foregroundColor(.black)
+                .multilineTextAlignment(.center)
             }
         }
         .onAppear {
@@ -32,18 +36,33 @@ struct PeripheralView: View {
         }
         .onDisappear {
             centralManager.disconnectFromDevice(peripheral)
+            centralManager.reset()
         }
     }
+}
+
+struct PeripheralConnectionView: View {
+    @Binding var attemptedConnect: Bool
+    @Binding var errorConnecting: Bool
     
-    func readRssi() {
-        centralManager.readRssi(peripheral)
+    var body: some View {
+        if attemptedConnect && !errorConnecting {
+            Text("Successfully connected to device!")
+        }
+        else if attemptedConnect && errorConnecting {
+            Text("Failed to connect to device")
+        }
+        else {
+            Text("Attemping to connect to device...")
+        }
     }
 }
 
 struct RssiView: View {
     @Binding var rssi: Int
+    var rssiHelper: RssiHelper
     
     var body: some View {
-        Text("RSSI is now \(rssi)")
+        Color(cgColor: rssiHelper.getColorFor(rssi))
     }
 }

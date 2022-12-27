@@ -14,16 +14,28 @@ class CentralManager: NSObject, ObservableObject {
     
     @Published public var devices: Set<CBPeripheral> = []
     
-    @Published public var targetRssi: Int = .zero
+    @Published public var targetRssi: Int = 0
     
     @Published public var isScanning: Bool = false
     
+    @Published public var attemptedConnect: Bool = false
+    
+    @Published public var errorConnecting: Bool = false
+    
     private var stayConnected: Bool = false
+    
+    private var rssiTimer: Timer?
         
     func start() {
         if centralManager == nil {
             centralManager = .init(CBCentralManager(delegate: self, queue: .main))
         }
+    }
+    
+    func reset() {
+        self.targetRssi = 0
+        self.attemptedConnect = false
+        self.errorConnecting = false
     }
     
     private func translateState(_ btState: CBManagerState) -> String {
@@ -51,6 +63,7 @@ class CentralManager: NSObject, ObservableObject {
     }
     
     func disconnectFromDevice(_ peripheral: CBPeripheral) {
+        self.stopMonitoringRssi()
         centralManager.cancelPeripheralConnection(peripheral)
         stayConnected = false
     }
@@ -67,10 +80,10 @@ class CentralManager: NSObject, ObservableObject {
         if !isScanning {
             centralManager.scanForPeripherals(withServices: [])
             isScanning = true
-            print("Started scanning for devices")
+            print("[CentralManager] Started scanning for devices")
         }
         else {
-            print("Already scanning for devices")
+            print("[CentralManager] Already scanning for devices")
         }
     }
     
@@ -78,13 +91,33 @@ class CentralManager: NSObject, ObservableObject {
         if isScanning {
             centralManager.stopScan()
             isScanning = false
-            print("Stopped scanning for devices")
+            print("[CentralManager] Stopped scanning for devices")
         }
         else {
-            print("Already stopped scanning for devices")
+            print("[CentralManager] Already stopped scanning for devices")
         }
     }
     
+    func startMonitoringRssi(_ peripheral: CBPeripheral) {
+        rssiTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
+            self.readRssi(peripheral)
+        }
+    }
+    
+    func stopMonitoringRssi() {
+        if let timer = rssiTimer {
+            if timer.isValid {
+                timer.invalidate()
+                print("[CentralManager] Canceled timer")
+            }
+            else {
+                print("[CentralManager] Timer has already been canceled")
+            }
+        }
+        else {
+            print("[CentralManager] No timer found")
+        }
+    }
 }
 
 extension CentralManager: CBPeripheralDelegate {
@@ -92,7 +125,6 @@ extension CentralManager: CBPeripheralDelegate {
         print("[CBPeripheralDelegate] Read RSSI for peripheral \(getPeripheralName(peripheral)) - \(RSSI.intValue)")
         self.targetRssi = RSSI.intValue
     }
-    
 }
 
 extension CentralManager: CBCentralManagerDelegate {
@@ -103,6 +135,19 @@ extension CentralManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("[CBPeripheralDelegate] Successfully connected to peripheral \(getPeripheralName(peripheral))")
         peripheral.delegate = self
+        
+        self.attemptedConnect = true
+        self.errorConnecting = false
+
+        self.stopScanning()
+        self.startMonitoringRssi(peripheral)
+    }
+    
+    func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        print("[CBPeripheralDelegate] Failed to connect to peripheral \(getPeripheralName(peripheral))")
+        
+        self.attemptedConnect = true
+        self.errorConnecting = true
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {

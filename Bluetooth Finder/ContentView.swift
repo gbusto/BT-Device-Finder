@@ -12,6 +12,8 @@ import CoreBluetooth
 struct ContentView: View {
     
     @ObservedObject var centralManager: CentralManager = CentralManager()
+    
+    @State var searchText: String = ""
 
     var body: some View {
         NavigationStack {
@@ -22,7 +24,8 @@ struct ContentView: View {
                             action: updateScanState)
                 
                 DevicesList(btManager: centralManager,
-                            _devices: $centralManager.devices)
+                            _devices: $centralManager.devices,
+                            searchText: $searchText)
             }
         }
         .onAppear {
@@ -44,15 +47,30 @@ struct DevicesList: View {
     var btManager: CentralManager
     @Binding var _devices: Set<CBPeripheral>
     
+    @Binding var searchText: String
+    
     var body: some View {
         ScrollView {
             ForEach(Array(_devices), id: \.self) { device in
-                DeviceView(btManager: btManager,
-                           device: device,
-                           textColor: .red)
+                if !searchText.isEmpty {
+                    let name = btManager.getPeripheralName(device)
+                    if name.contains(searchText) {
+                        DeviceView(btManager: btManager,
+                                   device: device,
+                                   textColor: .red)
+                        .padding()
+                    }
+                }
+                else {
+                    DeviceView(btManager: btManager,
+                               device: device,
+                               textColor: .red)
+                    .padding()
+                }
             }
         }
         .padding()
+        .searchable(text: $searchText)
     }
 }
 
