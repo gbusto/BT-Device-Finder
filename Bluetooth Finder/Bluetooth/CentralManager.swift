@@ -13,29 +13,16 @@ class CentralManager: NSObject, ObservableObject {
     public var centralManager: CBCentralManager!
     
     @Published public var devices: Set<CBPeripheral> = []
-    
-    @Published public var targetRssi: Int = 0
-    
+    @Published public var rssiReadings: [UUID: Int] = [:]
+        
     @Published public var isScanning: Bool = false
-    
-    @Published public var attemptedConnect: Bool = false
-    
-    @Published public var errorConnecting: Bool = false
-    
-    private var stayConnected: Bool = false
-    
-    private var rssiTimer: Timer?
+        
+    private var rssiTimers: [Timer] = []
         
     func start() {
         if centralManager == nil {
             centralManager = .init(CBCentralManager(delegate: self, queue: .main))
         }
-    }
-    
-    func reset() {
-        self.targetRssi = 0
-        self.attemptedConnect = false
-        self.errorConnecting = false
     }
     
     private func translateState(_ btState: CBManagerState) -> String {
@@ -59,13 +46,10 @@ class CentralManager: NSObject, ObservableObject {
     
     func connectToDevice(_ peripheral: CBPeripheral) {
         centralManager.connect(peripheral)
-        stayConnected = true
     }
     
     func disconnectFromDevice(_ peripheral: CBPeripheral) {
-        self.stopMonitoringRssi()
         centralManager.cancelPeripheralConnection(peripheral)
-        stayConnected = false
     }
     
     func readRssi(_ peripheral: CBPeripheral) {
@@ -99,11 +83,15 @@ class CentralManager: NSObject, ObservableObject {
     }
     
     func startMonitoringRssi(_ peripheral: CBPeripheral) {
-        rssiTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
+        let rssiTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
             self.readRssi(peripheral)
         }
+        
+        rssiTimers.append(rssiTimer)
     }
     
+    // Figure out when to use this function, or get rid of it altogether
+    /*
     func stopMonitoringRssi() {
         if let timer = rssiTimer {
             if timer.isValid {
@@ -118,32 +106,38 @@ class CentralManager: NSObject, ObservableObject {
             print("[CentralManager] No timer found")
         }
     }
+    */
     
     func translateRssiSimple(_ rssi: Int) -> String {
         if rssi >= -90 && rssi < -80 {
-            return "🔴"
+            return "red-signal-simple"
         }
         
         if rssi >= -80 && rssi < -65 {
-            return "🟠"
+            return "orange-signal-simple"
         }
         
         if rssi >= -65 && rssi < -45 {
-            return "🟡"
+            return "yellow-signal-simple"
         }
         
         if rssi >= -45 && rssi <= -30 {
-            return "🟢"
+            return "green-signal-simple"
         }
         
-        return "🚫"
+        return "no-signal-simple"
+    }
+    
+    func isConnectedToDevice(_ peripheral: CBPeripheral) -> Bool {
+        return peripheral.state == CBPeripheralState.connected
     }
 }
 
 extension CentralManager: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
         print("[CBPeripheralDelegate] Read RSSI for peripheral \(getPeripheralName(peripheral)) - \(RSSI.intValue)")
-        self.targetRssi = RSSI.intValue
+
+        rssiReadings[peripheral.identifier] = RSSI.intValue
     }
 }
 
@@ -155,34 +149,26 @@ extension CentralManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("[CBPeripheralDelegate] Successfully connected to peripheral \(getPeripheralName(peripheral))")
         peripheral.delegate = self
-        
-        self.attemptedConnect = true
-        self.errorConnecting = false
 
-        self.stopScanning()
         self.startMonitoringRssi(peripheral)
     }
     
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         print("[CBPeripheralDelegate] Failed to connect to peripheral \(getPeripheralName(peripheral))")
-        
-        self.attemptedConnect = true
-        self.errorConnecting = true
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         print("[CBCentralManagerDelegate] Discovered new peripheral: \(getPeripheralName(peripheral))")
         
         devices.insert(peripheral)
+        centralManager.connect(peripheral)
     }
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("[CBCentralManagerDelegate] Disconnected from peripheral: \(getPeripheralName(peripheral))")
         
-        if stayConnected {
-            print("[CBCentralManagerDelegate] Attempting to re-connect to peripheral")
-            connectToDevice(peripheral)
-        }
+        print("[CBCentralManagerDelegate] Attempting to re-connect to peripheral")
+        self.connectToDevice(peripheral)
     }
     
 }

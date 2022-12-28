@@ -16,54 +16,55 @@ struct PeripheralView: View {
     public var peripheral: CBPeripheral
         
     var rssiHelper: RssiHelper = RssiHelper()
-            
+                
     var body: some View {
         ZStack {
             LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
             
             VStack {
-                RssiView(rssi: $centralManager.targetRssi, rssiHelper: rssiHelper)
+                RssiView(peripheral: peripheral,
+                         rssiReadings: $centralManager.rssiReadings,
+                         rssiHelper: rssiHelper)
                 
-                PeripheralConnectionView(attemptedConnect: $centralManager.attemptedConnect,
-                                         errorConnecting: $centralManager.errorConnecting)
+                PeripheralConnectionView(isConnected: centralManager.isConnectedToDevice(peripheral))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
             }
         }
-        .onAppear {
-            centralManager.connectToDevice(peripheral)
-        }
-        .onDisappear {
-            centralManager.disconnectFromDevice(peripheral)
-            centralManager.reset()
-        }
+        .navigationTitle("\(centralManager.getPeripheralName(peripheral))")
     }
 }
 
 struct PeripheralConnectionView: View {
-    @Binding var attemptedConnect: Bool
-    @Binding var errorConnecting: Bool
+    var isConnected: Bool
     
     var body: some View {
-        if attemptedConnect && !errorConnecting {
+        if isConnected {
             Text("Successfully connected to device!")
         }
-        else if attemptedConnect && errorConnecting {
-            Text("Failed to connect to device")
-        }
         else {
-            Text("Attemping to connect to device...")
+            Text("Unable to connect to device")
         }
     }
 }
 
 struct RssiView: View {
-    @Binding var rssi: Int
+    var peripheral: CBPeripheral
+    @Binding var rssiReadings: [UUID: Int]
     var rssiHelper: RssiHelper
     
     var body: some View {
-        Image(rssiHelper.getImageNameFor(rssi))
+        Image(rssiHelper.getImageNameFor(getRssiForPeripheral(peripheral)))
             .resizable()
             .aspectRatio(contentMode: .fit)
+            .frame(maxWidth: 250)
+    }
+    
+    func getRssiForPeripheral(_ peripheral: CBPeripheral) -> Int {
+        if let rssi = rssiReadings[peripheral.identifier] {
+            return rssi
+        }
+        
+        return 0
     }
 }

@@ -27,7 +27,8 @@ struct ContentView: View {
                                 action: updateScanState)
                     
                     DevicesList(btManager: centralManager,
-                                _devices: $centralManager.devices,
+                                devices: $centralManager.devices,
+                                rssiReadings: $centralManager.rssiReadings,
                                 searchText: $searchText)
                 }
             }
@@ -49,34 +50,47 @@ struct ContentView: View {
 
 struct DevicesList: View {
     var btManager: CentralManager
-    @Binding var _devices: Set<CBPeripheral>
+    @Binding var devices: Set<CBPeripheral>
+    @Binding var rssiReadings: [UUID: Int]
     
     @Binding var searchText: String
     
     var body: some View {
         ScrollView {
-            ForEach(Array(_devices), id: \.self) { device in
+            ForEach(Array(devices), id: \.self) { device in
                 if !searchText.isEmpty {
                     let name = btManager.getPeripheralName(device).lowercased()
                     if name.contains(searchText.lowercased()) {
                         DeviceRow(btManager: btManager,
-                                  device: device)
+                                  device: device,
+                                  rssi: getRssiForPeripheral(device))
                     }
                 }
                 else {
                     DeviceRow(btManager: btManager,
-                              device: device)
+                              device: device,
+                              rssi: getRssiForPeripheral(device))
                 }
             }
         }
         .padding()
         .searchable(text: $searchText, prompt: "Search by device name")
     }
+    
+    func getRssiForPeripheral(_ peripheral: CBPeripheral) -> Int {
+        if let rssi = rssiReadings[peripheral.identifier] {
+            return rssi
+        }
+        
+        return 0
+    }
+
 }
 
 struct DeviceRow: View {
     var btManager: CentralManager
     var device: CBPeripheral
+    var rssi: Int
     var maxStringLength: Int = 20
     
     var body: some View {
@@ -86,7 +100,7 @@ struct DeviceRow: View {
                 
                 HStack {
                     Circle().foregroundColor(.random)
-                        .frame(maxHeight: 30)
+                        .frame(maxWidth: 30)
                     
                     Spacer()
                     
@@ -95,7 +109,10 @@ struct DeviceRow: View {
                     
                     Spacer()
                     
-                    Text("\(btManager.translateRssiSimple(device.rssi?.intValue ?? 0))")
+                    Image("\(btManager.translateRssiSimple(rssi))")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 30)
                 }
                 .padding()
             }
