@@ -13,7 +13,7 @@ struct Bluetooth_FinderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            PrimaryView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }

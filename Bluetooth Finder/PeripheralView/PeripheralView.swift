@@ -32,6 +32,9 @@ struct PeripheralView: View {
             }
         }
         .navigationTitle("\(centralManager.getPeripheralName(peripheral))")
+        .onAppear {
+            centralManager.requestFullDiscovery(forPeripheral: peripheral)
+        }
     }
 }
 

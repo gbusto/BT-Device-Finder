@@ -9,7 +9,7 @@ import SwiftUI
 import CoreData
 import CoreBluetooth
 
-struct ContentView: View {
+struct PrimaryView: View {
     
     @ObservedObject var centralManager: CentralManager = CentralManager()
     
@@ -158,25 +158,9 @@ struct AppButton: View {
     }
 }
 
-extension Color {
-    public static var random: Color {
-        return Color(cgColor: CGColor(red: CGFloat.random(in: 0..<1),
-                                      green: CGFloat.random(in: 0..<1),
-                                      blue: CGFloat.random(in: 0..<1),
-                                      alpha: 1))
-    }
-    
-    public static var bgDark1: Color {
-        return Color(cgColor: CGColor(red: 0.08, green: 0.08, blue: 0.08, alpha: 1))
-    }
-    
-    public static var bgDark2: Color {
-        return Color(cgColor: CGColor(red: 0.07, green: 0.07, blue: 0.07, alpha: 1))
-    }
-}
 
-struct ContentView_Previews: PreviewProvider {
+struct PrimaryView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        PrimaryView()
     }
 }
