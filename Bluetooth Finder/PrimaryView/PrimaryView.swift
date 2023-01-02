@@ -94,7 +94,11 @@ struct DeviceRow: View {
     var maxStringLength: Int = 20
     
     var body: some View {
-        NavigationLink(destination: PeripheralView(centralManager: btManager, peripheral: device)) {
+        NavigationLink(destination: PeripheralView(centralManager: btManager,
+                                                   device: Device(id: device.identifier,
+                                                                  name: device.name ?? "Unknown",
+                                                                  rssi: rssi,
+                                                                  state: device.state.rawValue))) {
             ZStack {
                 Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
                 

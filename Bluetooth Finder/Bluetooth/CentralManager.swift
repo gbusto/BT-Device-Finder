@@ -114,8 +114,14 @@ class CentralManager: NSObject, ObservableObject {
         return peripheral.state == CBPeripheralState.connected
     }
     
-    func requestFullDiscovery(forPeripheral peripheral: CBPeripheral) {
-        peripheral.discoverServices([])
+    func requestFullDiscovery(forPeripheralWithId deviceId: UUID) {
+        let peripheral = devices.first(where: {
+            $0.identifier == deviceId
+        })
+        
+        if let p = peripheral {
+            p.discoverServices([])
+        }
     }
 }
 

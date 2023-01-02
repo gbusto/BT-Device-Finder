@@ -9,11 +9,22 @@ import Foundation
 import SwiftUI
 import CoreBluetooth
 
+struct Device: Identifiable, Hashable {
+    var id: UUID
+    var name: String
+    var rssi: Int
+    var state: Int
+    
+    func isConnected() -> Bool {
+        return state == CBPeripheralState.connected.rawValue
+    }
+}
+
 struct PeripheralView: View {
     
     @ObservedObject public var centralManager: CentralManager
     
-    public var peripheral: CBPeripheral
+    public var device: Device
         
     var rssiHelper: RssiHelper = RssiHelper()
                 
@@ -22,18 +33,18 @@ struct PeripheralView: View {
             LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
             
             VStack {
-                RssiView(peripheral: peripheral,
+                RssiView(device: device,
                          rssiReadings: $centralManager.rssiReadings,
                          rssiHelper: rssiHelper)
                 
-                PeripheralConnectionView(isConnected: centralManager.isConnectedToDevice(peripheral))
+                PeripheralConnectionView(isConnected: device.isConnected())
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
             }
         }
-        .navigationTitle("\(centralManager.getPeripheralName(peripheral))")
+        .navigationTitle("\(device.name))")
         .onAppear {
-            centralManager.requestFullDiscovery(forPeripheral: peripheral)
+            centralManager.requestFullDiscovery(forPeripheralWithId: device.id)
         }
     }
 }
@@ -52,19 +63,19 @@ struct PeripheralConnectionView: View {
 }
 
 struct RssiView: View {
-    var peripheral: CBPeripheral
+    var device: Device
     @Binding var rssiReadings: [UUID: Int]
     var rssiHelper: RssiHelper
     
     var body: some View {
-        Image(rssiHelper.getImageNameFor(getRssiForPeripheral(peripheral)))
+        Image(rssiHelper.getImageNameFor(getRssiForPeripheral(device.id)))
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(maxWidth: 250)
     }
     
-    func getRssiForPeripheral(_ peripheral: CBPeripheral) -> Int {
-        if let rssi = rssiReadings[peripheral.identifier] {
+    func getRssiForPeripheral(_ deviceId: UUID) -> Int {
+        if let rssi = rssiReadings[deviceId] {
             return rssi
         }
         
