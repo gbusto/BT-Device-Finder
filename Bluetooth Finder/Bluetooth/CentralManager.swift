@@ -49,8 +49,7 @@ class CentralManager: NSObject, ObservableObject {
     }
     
     func getPeripheralById(_ deviceId: UUID) -> CBPeripheral? {
-        let peripherals = centralManager.retrieveConnectedPeripherals(withServices: [])
-        if let p = peripherals.first(where: { $0.identifier == deviceId }) {
+        if let p = _peripherals.first(where: { $0.identifier == deviceId }) {
             return p
         }
         
@@ -123,8 +122,12 @@ class CentralManager: NSObject, ObservableObject {
         return "no-signal-simple"
     }
     
-    func isConnectedToDevice(_ peripheral: CBPeripheral) -> Bool {
-        return peripheral.state == CBPeripheralState.connected
+    func isConnectedToDevice(_ deviceId: UUID) -> Bool {
+        if let peripheral = getPeripheralById(deviceId) {
+            return peripheral.state == CBPeripheralState.connected
+        }
+        
+        return false
     }
     
     func requestFullDiscovery(forPeripheralWithId deviceId: UUID) {

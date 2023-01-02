@@ -7,21 +7,16 @@
 
 import Foundation
 import SwiftUI
-import CoreBluetooth
 
 struct Device: Identifiable, Hashable {
     var id: UUID
     var name: String
     var state: Int
-    
-    func isConnected() -> Bool {
-        return state == CBPeripheralState.connected.rawValue
-    }
 }
 
 struct PeripheralView: View {
     
-    @ObservedObject public var centralManager: CentralManager
+    @EnvironmentObject public var centralManager: CentralManager
     
     public var device: Device
         
@@ -36,9 +31,9 @@ struct PeripheralView: View {
                          rssiReadings: $centralManager.rssiReadings,
                          rssiHelper: rssiHelper)
                 
-                PeripheralConnectionView(isConnected: device.isConnected())
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
+                PeripheralConnectionView(isConnected: centralManager.isConnectedToDevice(device.id))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
             }
         }
         .navigationTitle("\(device.name))")

@@ -7,11 +7,10 @@
 
 import SwiftUI
 import CoreData
-import CoreBluetooth
 
 struct PrimaryView: View {
     
-    @ObservedObject var centralManager: CentralManager = CentralManager()
+    @StateObject var centralManager: CentralManager = CentralManager()
     
     @State var searchText: String = ""
 
@@ -26,11 +25,11 @@ struct PrimaryView: View {
                                 inactiveText: "Start Scanning",
                                 action: updateScanState)
                     
-                    DevicesList(btManager: centralManager,
-                                devices: $centralManager.devices,
+                    DevicesList(devices: $centralManager.devices,
                                 rssiReadings: $centralManager.rssiReadings,
                                 searchText: $searchText)
                 }
+                .environmentObject(centralManager)
             }
         }
         .onAppear {
@@ -49,7 +48,7 @@ struct PrimaryView: View {
 }
 
 struct DevicesList: View {
-    var btManager: CentralManager
+    @EnvironmentObject var btManager: CentralManager
     @Binding var devices: Set<Device>
     @Binding var rssiReadings: [UUID: Int]
     
@@ -61,15 +60,15 @@ struct DevicesList: View {
                 if !searchText.isEmpty {
                     let name = device.name.lowercased()
                     if name.contains(searchText.lowercased()) {
-                        DeviceRow(btManager: btManager,
-                                  device: device,
+                        DeviceRow(device: device,
                                   rssi: getRssiForPeripheral(device.id))
+                        .environmentObject(btManager)
                     }
                 }
                 else {
-                    DeviceRow(btManager: btManager,
-                              device: device,
+                    DeviceRow(device: device,
                               rssi: getRssiForPeripheral(device.id))
+                    .environmentObject(btManager)
                 }
             }
         }
@@ -88,14 +87,14 @@ struct DevicesList: View {
 }
 
 struct DeviceRow: View {
-    var btManager: CentralManager
+    @EnvironmentObject var btManager: CentralManager
+
     var device: Device
     var rssi: Int
     var maxStringLength: Int = 20
     
     var body: some View {
-        NavigationLink(destination: PeripheralView(centralManager: btManager,
-                                                   device: device)) {
+        NavigationLink(destination: PeripheralView(device: device).environmentObject(btManager)) {
             ZStack {
                 Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
                 
@@ -130,32 +129,6 @@ struct DeviceRow: View {
         }
         
         return name
-    }
-}
-
-struct StateButton: View {
-    @Binding var state: Bool
-    
-    var activeText: String
-    var inactiveText: String
-    
-    var action: () -> Void
-    
-    var body: some View {
-        AppButton(text: state ? activeText : inactiveText,
-                  action: action)
-    }
-}
-
-struct AppButton: View {
-    var text: String
-    
-    var action: () -> Void
-    
-    var body: some View {
-        Button(text, action: action)
-            .buttonStyle(.bordered)
-            .foregroundColor(.blue)
     }
 }
 

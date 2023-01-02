@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0304EEF42963464C0078D287 /* CommonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0304EEF32963464C0078D287 /* CommonViews.swift */; };
 		03ACEF69295F078D0097F487 /* CommonColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ACEF68295F078D0097F487 /* CommonColors.swift */; };
 		03ACEF6B295F09E20097F487 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ACEF6A295F09E20097F487 /* Logger.swift */; };
 		03FB35AE295791AE00322BA4 /* Bluetooth_FinderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FB35AD295791AE00322BA4 /* Bluetooth_FinderApp.swift */; };
@@ -41,6 +42,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0304EEF32963464C0078D287 /* CommonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
 		03ACEF68295F078D0097F487 /* CommonColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonColors.swift; sourceTree = "<group>"; };
 		03ACEF6A295F09E20097F487 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		03FB35AA295791AE00322BA4 /* Bluetooth Finder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bluetooth Finder.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -85,6 +87,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0304EEF22963463C0078D287 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				03ACEF68295F078D0097F487 /* CommonColors.swift */,
+				0304EEF32963464C0078D287 /* CommonViews.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
 		03ACEF65295B4ADD0097F487 /* Bluetooth */ = {
 			isa = PBXGroup;
 			children = (
@@ -133,6 +144,7 @@
 		03FB35AC295791AE00322BA4 /* Bluetooth Finder */ = {
 			isa = PBXGroup;
 			children = (
+				0304EEF22963463C0078D287 /* Common */,
 				03ACEF67295F063A0097F487 /* PrimaryView */,
 				03ACEF66295F05F10097F487 /* PeripheralView */,
 				03ACEF65295B4ADD0097F487 /* Bluetooth */,
@@ -141,7 +153,6 @@
 				03FB35B6295791B000322BA4 /* Persistence.swift */,
 				03FB35B8295791B000322BA4 /* Bluetooth_Finder.xcdatamodeld */,
 				03FB35B3295791B000322BA4 /* Preview Content */,
-				03ACEF68295F078D0097F487 /* CommonColors.swift */,
 				03ACEF6A295F09E20097F487 /* Logger.swift */,
 			);
 			path = "Bluetooth Finder";
@@ -303,6 +314,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				03ACEF69295F078D0097F487 /* CommonColors.swift in Sources */,
+				0304EEF42963464C0078D287 /* CommonViews.swift in Sources */,
 				03FB35B7295791B000322BA4 /* Persistence.swift in Sources */,
 				03FB35B0295791AE00322BA4 /* PrimaryView.swift in Sources */,
 				03FB35E12958B0CB00322BA4 /* RssiHelper.swift in Sources */,
