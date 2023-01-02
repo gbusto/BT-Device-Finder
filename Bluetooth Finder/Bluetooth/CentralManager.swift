@@ -12,7 +12,11 @@ class CentralManager: NSObject, ObservableObject {
     
     public var centralManager: CBCentralManager!
     
-    @Published public var devices: Set<CBPeripheral> = []
+    // Odd thing; MUST keep a reference to all peripherals we've discovered, otherwise
+    // doing things like peripheral.connect will fail
+    private var _peripherals: Set<CBPeripheral> = []
+    
+    @Published public var devices: Set<Device> = []
     @Published public var rssiReadings: [UUID: Int] = [:]
         
     @Published public var isScanning: Bool = false
@@ -42,6 +46,15 @@ class CentralManager: NSObject, ObservableObject {
         default:
             return "enexpected \(btState.rawValue)"
         }
+    }
+    
+    func getPeripheralById(_ deviceId: UUID) -> CBPeripheral? {
+        let peripherals = centralManager.retrieveConnectedPeripherals(withServices: [])
+        if let p = peripherals.first(where: { $0.identifier == deviceId }) {
+            return p
+        }
+        
+        return nil
     }
     
     func connectToDevice(_ peripheral: CBPeripheral) {
@@ -115,12 +128,8 @@ class CentralManager: NSObject, ObservableObject {
     }
     
     func requestFullDiscovery(forPeripheralWithId deviceId: UUID) {
-        let peripheral = devices.first(where: {
-            $0.identifier == deviceId
-        })
-        
-        if let p = peripheral {
-            p.discoverServices([])
+        if let peripheral = getPeripheralById(deviceId) {
+            peripheral.discoverServices([])
         }
     }
 }
@@ -194,7 +203,11 @@ extension CentralManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         Logger.print("[CBCentralManagerDelegate] Discovered new peripheral: \(getPeripheralName(peripheral))")
         
-        devices.insert(peripheral)
+        let device = Device(id: peripheral.identifier, name: peripheral.name ?? "Unknown", state: peripheral.state.rawValue)
+        devices.insert(device)
+        
+        _peripherals.insert(peripheral)
+        
         centralManager.connect(peripheral)
     }
     

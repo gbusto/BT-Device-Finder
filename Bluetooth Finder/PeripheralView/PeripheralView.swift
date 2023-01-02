@@ -12,7 +12,6 @@ import CoreBluetooth
 struct Device: Identifiable, Hashable {
     var id: UUID
     var name: String
-    var rssi: Int
     var state: Int
     
     func isConnected() -> Bool {

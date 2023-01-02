@@ -50,26 +50,26 @@ struct PrimaryView: View {
 
 struct DevicesList: View {
     var btManager: CentralManager
-    @Binding var devices: Set<CBPeripheral>
+    @Binding var devices: Set<Device>
     @Binding var rssiReadings: [UUID: Int]
     
     @Binding var searchText: String
     
     var body: some View {
         ScrollView {
-            ForEach(Array(devices), id: \.self) { device in
+            ForEach(Array(devices), id: \.id) { device in
                 if !searchText.isEmpty {
-                    let name = btManager.getPeripheralName(device).lowercased()
+                    let name = device.name.lowercased()
                     if name.contains(searchText.lowercased()) {
                         DeviceRow(btManager: btManager,
                                   device: device,
-                                  rssi: getRssiForPeripheral(device))
+                                  rssi: getRssiForPeripheral(device.id))
                     }
                 }
                 else {
                     DeviceRow(btManager: btManager,
                               device: device,
-                              rssi: getRssiForPeripheral(device))
+                              rssi: getRssiForPeripheral(device.id))
                 }
             }
         }
@@ -77,8 +77,8 @@ struct DevicesList: View {
         .searchable(text: $searchText, prompt: "Search by device name")
     }
     
-    func getRssiForPeripheral(_ peripheral: CBPeripheral) -> Int {
-        if let rssi = rssiReadings[peripheral.identifier] {
+    func getRssiForPeripheral(_ deviceId: UUID) -> Int {
+        if let rssi = rssiReadings[deviceId] {
             return rssi
         }
         
@@ -89,16 +89,13 @@ struct DevicesList: View {
 
 struct DeviceRow: View {
     var btManager: CentralManager
-    var device: CBPeripheral
+    var device: Device
     var rssi: Int
     var maxStringLength: Int = 20
     
     var body: some View {
         NavigationLink(destination: PeripheralView(centralManager: btManager,
-                                                   device: Device(id: device.identifier,
-                                                                  name: device.name ?? "Unknown",
-                                                                  rssi: rssi,
-                                                                  state: device.state.rawValue))) {
+                                                   device: device)) {
             ZStack {
                 Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
                 
@@ -108,7 +105,7 @@ struct DeviceRow: View {
                     
                     Spacer()
                     
-                    Text("\(truncatedName(btManager.getPeripheralName(device)))")
+                    Text("\(truncatedName(device.name))")
                         .foregroundColor(.white)
                     
                     Spacer()
