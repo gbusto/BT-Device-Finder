@@ -7,18 +7,14 @@
 
 import Foundation
 import SwiftUI
-
-struct Device: Identifiable, Hashable {
-    var id: UUID
-    var name: String
-    var state: Int
-}
+import CoreBluetooth
 
 struct PeripheralView: View {
     
     @EnvironmentObject public var centralManager: CentralManager
     
-    public var device: Device
+    public var deviceId: UUID
+    public var deviceName: String
         
     var rssiHelper: RssiHelper = RssiHelper()
                 
@@ -27,18 +23,18 @@ struct PeripheralView: View {
             LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
             
             VStack {
-                RssiView(device: device,
+                RssiView(deviceId: deviceId,
                          rssiReadings: $centralManager.rssiReadings,
                          rssiHelper: rssiHelper)
                 
-                PeripheralConnectionView(isConnected: centralManager.isConnectedToDevice(device.id))
+                PeripheralConnectionView(isConnected: centralManager.isConnectedToDevice(deviceId))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
             }
         }
-        .navigationTitle("\(device.name))")
+        .navigationTitle("\(deviceName)")
         .onAppear {
-            centralManager.requestFullDiscovery(forPeripheralWithId: device.id)
+            centralManager.requestFullDiscovery(forPeripheralWithId: deviceId)
         }
     }
 }
@@ -57,12 +53,12 @@ struct PeripheralConnectionView: View {
 }
 
 struct RssiView: View {
-    var device: Device
+    var deviceId: UUID
     @Binding var rssiReadings: [UUID: Int]
     var rssiHelper: RssiHelper
     
     var body: some View {
-        Image(rssiHelper.getImageNameFor(getRssiForPeripheral(device.id)))
+        Image(rssiHelper.getImageNameFor(getRssiForPeripheral(deviceId)))
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(maxWidth: 250)

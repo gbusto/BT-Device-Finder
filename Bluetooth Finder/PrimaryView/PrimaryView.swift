@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreData
+import CoreBluetooth
 
 struct PrimaryView: View {
     
@@ -49,26 +50,27 @@ struct PrimaryView: View {
 
 struct DevicesList: View {
     @EnvironmentObject var btManager: CentralManager
-    @Binding var devices: Set<Device>
+    @Binding var devices: Set<CBPeripheral>
     @Binding var rssiReadings: [UUID: Int]
     
     @Binding var searchText: String
     
     var body: some View {
         ScrollView {
-            ForEach(Array(devices), id: \.id) { device in
+            ForEach(Array(devices), id: \.self) { device in
+                let deviceId = device.identifier
+                let deviceName = device.name ?? "Unknown"
                 if !searchText.isEmpty {
-                    let name = device.name.lowercased()
-                    if name.contains(searchText.lowercased()) {
-                        DeviceRow(device: device,
-                                  rssi: getRssiForPeripheral(device.id))
-                        .environmentObject(btManager)
+                    if deviceName.lowercased().contains(searchText.lowercased()) {
+                        DeviceRow(deviceId: deviceId,
+                                  deviceName: deviceName,
+                                  rssi: getRssiForPeripheral(device.identifier))
                     }
                 }
                 else {
-                    DeviceRow(device: device,
-                              rssi: getRssiForPeripheral(device.id))
-                    .environmentObject(btManager)
+                    DeviceRow(deviceId: deviceId,
+                              deviceName: deviceName,
+                              rssi: getRssiForPeripheral(device.identifier))
                 }
             }
         }
@@ -89,12 +91,14 @@ struct DevicesList: View {
 struct DeviceRow: View {
     @EnvironmentObject var btManager: CentralManager
 
-    var device: Device
+    var deviceId: UUID
+    var deviceName: String
     var rssi: Int
     var maxStringLength: Int = 20
     
     var body: some View {
-        NavigationLink(destination: PeripheralView(device: device).environmentObject(btManager)) {
+        NavigationLink(destination: PeripheralView(deviceId: deviceId,
+                                                   deviceName: deviceName).environmentObject(btManager)) {
             ZStack {
                 Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
                 
@@ -104,7 +108,7 @@ struct DeviceRow: View {
                     
                     Spacer()
                     
-                    Text("\(truncatedName(device.name))")
+                    Text("\(truncatedName(deviceName))")
                         .foregroundColor(.white)
                     
                     Spacer()

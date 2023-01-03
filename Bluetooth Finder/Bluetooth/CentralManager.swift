@@ -12,11 +12,7 @@ class CentralManager: NSObject, ObservableObject {
     
     public var centralManager: CBCentralManager!
     
-    // Odd thing; MUST keep a reference to all peripherals we've discovered, otherwise
-    // doing things like peripheral.connect will fail
-    private var _peripherals: Set<CBPeripheral> = []
-    
-    @Published public var devices: Set<Device> = []
+    @Published public var devices: Set<CBPeripheral> = []
     @Published public var rssiReadings: [UUID: Int] = [:]
         
     @Published public var isScanning: Bool = false
@@ -49,7 +45,7 @@ class CentralManager: NSObject, ObservableObject {
     }
     
     func getPeripheralById(_ deviceId: UUID) -> CBPeripheral? {
-        if let p = _peripherals.first(where: { $0.identifier == deviceId }) {
+        if let p = devices.first(where: { $0.identifier == deviceId }) {
             return p
         }
         
@@ -74,6 +70,9 @@ class CentralManager: NSObject, ObservableObject {
     
     func startScanning() {
         if !isScanning {
+            // We may end up with duplicate devices if we don't reset these variables at the start of each scan
+            devices = []
+            
             centralManager.scanForPeripherals(withServices: [])
             isScanning = true
             Logger.print("[CentralManager] Started scanning for devices")
@@ -206,11 +205,7 @@ extension CentralManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         Logger.print("[CBCentralManagerDelegate] Discovered new peripheral: \(getPeripheralName(peripheral))")
         
-        let device = Device(id: peripheral.identifier, name: peripheral.name ?? "Unknown", state: peripheral.state.rawValue)
-        devices.insert(device)
-        
-        _peripherals.insert(peripheral)
-        
+        devices.insert(peripheral)
         centralManager.connect(peripheral)
     }
     
