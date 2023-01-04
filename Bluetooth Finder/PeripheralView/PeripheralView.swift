@@ -13,10 +13,12 @@ struct PeripheralView: View {
     
     @EnvironmentObject public var centralManager: CentralManager
     
+    @State public var deviceFavorited: Bool
+    
     @State public var customDeviceName: String = ""
 
     @State private var showEditView: Bool = false
-    
+        
     public var deviceId: UUID
     public var deviceName: String
         
@@ -46,9 +48,19 @@ struct PeripheralView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    
                     Button {
-                        print("Edit")
+                        updateFavorite()
+                    } label: {
+                        if deviceFavorited {
+                            Label("", systemImage: "star.fill")
+                        }
+                        else {
+                            Label("", systemImage: "star")
+                        }
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
                         showEditView = !showEditView
                     } label: {
                         Label("", systemImage: "square.and.pencil")
@@ -56,7 +68,7 @@ struct PeripheralView: View {
                     .alert("Edit device name", isPresented: $showEditView, actions: {
                         TextField("Custom device name", text: $customDeviceName)
                         
-                        Button("Save", action: saveName)
+                        Button("Save", action: updateName)
                         Button("Cancel", role: .cancel, action: {})
                     })
                 }
@@ -67,8 +79,24 @@ struct PeripheralView: View {
         }
     }
     
-    func saveName() {
-        PersistenceController.shared.updateObjectWithId(deviceId, customDeviceName)
+    func updateName() {
+        let result = PersistenceController.shared
+            .updateObjectName(withId: deviceId,
+                              withName: customDeviceName)
+        if !result {
+            print("Error update custom name for device")
+        }
+    }
+    
+    func updateFavorite() {
+        deviceFavorited = !deviceFavorited
+        
+        let result = PersistenceController.shared
+            .updateObjectFavoriteStatus(withId: deviceId,
+                                        withFavoriteStatus: deviceFavorited)
+        if !result {
+            print("Error update favorite status for device")
+        }
     }
 }
 
@@ -130,7 +158,7 @@ struct RssiView: View {
 struct PeripheralView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            PeripheralView(deviceId: UUID(), deviceName: "Test Device")
+            PeripheralView(deviceFavorited: false, deviceId: UUID(), deviceName: "Test Device")
                 .environmentObject(CentralManager())
         }
     }

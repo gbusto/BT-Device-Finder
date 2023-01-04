@@ -63,10 +63,12 @@ struct DevicesList: View {
         ScrollView {
             ForEach(Array(devices) as [CBPeripheral], id: \.self) { device in
                 let deviceId = device.identifier
-                let deviceName = getDeviceName(device)
+                let deviceName = getDeviceName(deviceId, device.name ?? "Unknown")
+                let deviceFavorited = getDeviceFavoriteStatus(device.identifier)
                 
                 let deviceRow = DeviceRow(deviceId: deviceId,
                                           deviceName: deviceName,
+                                          deviceFavorited: deviceFavorited,
                                           rssi: getRssiForPeripheral(deviceId))
                 if !searchText.isEmpty {
                     if deviceName.lowercased().contains(searchText.lowercased()) {
@@ -90,10 +92,10 @@ struct DevicesList: View {
         return 0
     }
     
-    func getDeviceName(_ device: CBPeripheral) -> String {
-        var deviceName: String = device.name ?? "Unknown"
+    func getDeviceName(_ deviceId: UUID, _ currentName: String) -> String {
+        var deviceName = currentName
         
-        if let item = savedDevices.first(where: { $0.id == device.identifier }) {
+        if let item = savedDevices.first(where: { $0.id == deviceId }) {
             if let cn = item.customName {
                 if !cn.isEmpty {
                     deviceName = cn
@@ -104,15 +106,13 @@ struct DevicesList: View {
         return deviceName
     }
     
-    func checkIfDeviceWasSaved(_ deviceId: UUID) {
-        if let item = PersistenceController.shared.getObjectWithId(deviceId) {
-            debugPrint("Got item! Custom name is \(String(describing: item.value(forKey: "customName") as? String))")
+    func getDeviceFavoriteStatus(_ deviceId: UUID) -> Bool {
+        if let item = savedDevices.first(where: { $0.id == deviceId }) {
+            return item.favorite
         }
-        else {
-            print("No item found for ID \(deviceId.uuidString)")
-        }
+        
+        return false
     }
-
 }
 
 struct DeviceRow: View {
@@ -120,11 +120,13 @@ struct DeviceRow: View {
 
     var deviceId: UUID
     var deviceName: String
+    var deviceFavorited: Bool
     var rssi: Int
     var maxStringLength: Int = 20
     
     var body: some View {
-        NavigationLink(destination: PeripheralView(customDeviceName: deviceName,
+        NavigationLink(destination: PeripheralView(deviceFavorited: deviceFavorited,
+                                                   customDeviceName: deviceName,
                                                    deviceId: deviceId,
                                                    deviceName: deviceName)
                 .environmentObject(btManager)) {
@@ -132,7 +134,9 @@ struct DeviceRow: View {
                 Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
                 
                 HStack {
-                    Circle().foregroundColor(.random)
+                    Image(deviceFavorited ? "star-filled" : "star-empty")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: 30)
                     
                     Spacer()

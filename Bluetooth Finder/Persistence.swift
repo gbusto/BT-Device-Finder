@@ -60,13 +60,13 @@ struct PersistenceController {
             let items = try container.viewContext.fetch(fetchRequest)
             return items.first
         } catch let error as NSError {
-            print("Could not fetch data: \(error)\n\(error.userInfo)")
+            print("Could not fetch data: \(error)\n\(error.userInfo)")+
         }
         
         return nil
     }
     
-    func createObject(_ deviceId: UUID, _ deviceName: String) -> Bool {
+    func createObject(withId deviceId: UUID, withName deviceName: String, favorited favorited: Bool) -> Bool {
         let context = container.viewContext
         
         let newItem = Device(context: context)
@@ -84,7 +84,27 @@ struct PersistenceController {
         }
     }
     
-    func updateObjectWithId(_ deviceId: UUID, _ deviceName: String) -> Bool {
+    func updateObjectFavoriteStatus(withId deviceId: UUID, withFavoriteStatus status: Bool) -> Bool {
+        let context = container.viewContext
+
+        if let item = self.getObjectWithId(deviceId) {
+            item.setValue(status, forKey: "favorite")
+            
+            do {
+                try context.save()
+                return true
+            }
+            catch {
+                let nsError = error as NSError
+                print("[!] Error updating device with ID \(deviceId.uuidString) and status \(status) - \(nsError), \(nsError.userInfo)")
+                return false
+            }
+        }
+        
+        return false
+    }
+    
+    func updateObjectName(withId deviceId: UUID, withName deviceName: String) -> Bool {
         let context = container.viewContext
 
         if let item = self.getObjectWithId(deviceId) {
@@ -101,6 +121,6 @@ struct PersistenceController {
             }
         }
         
-        return self.createObject(deviceId, deviceName)
+        return false
     }
 }
