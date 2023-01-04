@@ -18,6 +18,10 @@ struct PeripheralView: View {
     @State public var customDeviceName: String = ""
 
     @State private var showEditView: Bool = false
+    
+    @State private var showErrorAlert: Bool = false
+    @State private var errorTitle: String = ""
+    @State private var errorMessage: String = ""
         
     public var deviceId: UUID
     public var deviceName: String
@@ -73,6 +77,14 @@ struct PeripheralView: View {
                     })
                 }
             }
+            .alert(isPresented: $showErrorAlert) {
+                Alert(title: Text(errorTitle),
+                      message: Text(errorMessage),
+                      dismissButton: .default(Text("OK")) {
+                        resetError()
+                      }
+                )
+            }
         }
         .onAppear {
             centralManager.requestFullDiscovery(forPeripheralWithId: deviceId)
@@ -83,8 +95,15 @@ struct PeripheralView: View {
         let result = PersistenceController.shared
             .updateObjectName(withId: deviceId,
                               withName: customDeviceName)
-        if !result {
-            Logger.print("Error updating custom name for device")
+        
+        switch result {
+        case .success(_):
+            // Pass; no nothing
+            break
+            
+        case .failure(let error):
+            print("Persistence error! \(error)")
+            break
         }
     }
     
@@ -94,9 +113,24 @@ struct PeripheralView: View {
         let result = PersistenceController.shared
             .updateObjectFavoriteStatus(withId: deviceId,
                                         withFavoriteStatus: deviceFavorited)
-        if !result {
-            Logger.print("Error updating favorite status for device")
+        
+        switch result {
+        case .success(_):
+            // Pass; no nothing
+            break
+            
+        case .failure(let error):
+            errorTitle = "Error"
+            errorMessage = "Error updating 'favorite' status for device. \(error)"
+            showErrorAlert = true
+            break
         }
+    }
+    
+    func resetError() {
+        showErrorAlert = false
+        errorTitle = ""
+        errorMessage = ""
     }
 }
 

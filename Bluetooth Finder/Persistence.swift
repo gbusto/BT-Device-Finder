@@ -6,6 +6,8 @@
 //
 import CoreData
 
+typealias PersistenceResult = Result<Bool, NSError>
+
 struct PersistenceController {
     static let shared = PersistenceController()
 
@@ -66,7 +68,7 @@ struct PersistenceController {
         return nil
     }
     
-    func createObject(withId deviceId: UUID, withName deviceName: String, favorited: Bool = true) -> Bool {
+    func createObject(withId deviceId: UUID, withName deviceName: String, favorited: Bool = true) -> PersistenceResult {
         let context = container.viewContext
         
         let newItem = Device(context: context)
@@ -76,16 +78,16 @@ struct PersistenceController {
         
         do {
             try context.save()
-            return true
+            return .success(true)
         }
         catch {
             let nsError = error as NSError
             Logger.print("[!] Error creating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
-            return false
+            return .failure(nsError)
         }
     }
     
-    func updateObjectFavoriteStatus(withId deviceId: UUID, withFavoriteStatus status: Bool) -> Bool {
+    func updateObjectFavoriteStatus(withId deviceId: UUID, withFavoriteStatus status: Bool) -> PersistenceResult {
         let context = container.viewContext
 
         if let item = self.getObjectWithId(deviceId) {
@@ -93,19 +95,19 @@ struct PersistenceController {
             
             do {
                 try context.save()
-                return true
+                return .success(true)
             }
             catch {
                 let nsError = error as NSError
                 Logger.print("[!] Error updating device with ID \(deviceId.uuidString) and status \(status) - \(nsError), \(nsError.userInfo)")
-                return false
+                return .failure(nsError)
             }
         }
         
         return self.createObject(withId: deviceId, withName: "", favorited: status)
     }
     
-    func updateObjectName(withId deviceId: UUID, withName deviceName: String) -> Bool {
+    func updateObjectName(withId deviceId: UUID, withName deviceName: String) -> PersistenceResult {
         let context = container.viewContext
 
         if let item = self.getObjectWithId(deviceId) {
@@ -113,12 +115,12 @@ struct PersistenceController {
             
             do {
                 try context.save()
-                return true
+                return .success(true)
             }
             catch {
                 let nsError = error as NSError
                 Logger.print("[!] Error updating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
-                return false
+                return .failure(nsError)
             }
         }
 

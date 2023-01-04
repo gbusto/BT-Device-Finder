@@ -39,3 +39,20 @@ struct BackgroundColor: View {
         LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
     }
 }
+
+struct AlertView: View {
+    var title: String
+    var message: String
+    var buttonText: String
+    
+    @Binding var showAlert: Bool
+    
+    var body: some View {
+        EmptyView()
+            .alert(title, isPresented: $showAlert, actions: {
+                Text(message)
+                
+                Button(buttonText, role: .cancel, action: {})
+            })
+    }
+}

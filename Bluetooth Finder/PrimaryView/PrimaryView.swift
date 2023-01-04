@@ -119,6 +119,10 @@ struct DeviceRow: View {
     var rssi: Int
     var maxStringLength: Int = 20
     
+    @State private var showErrorAlert: Bool = false
+    @State private var errorMessage: String = ""
+    @State private var errorTitle: String = ""
+    
     var body: some View {
         NavigationLink(destination: PeripheralView(deviceFavorited: deviceFavorited,
                                                    customDeviceName: deviceName,
@@ -151,14 +155,31 @@ struct DeviceRow: View {
                 .padding()
             }
             .cornerRadius(15)
+            .alert(isPresented: $showErrorAlert) {
+                Alert(title: Text(errorTitle),
+                      message: Text(errorMessage),
+                      dismissButton: .default(Text("OK")) {
+                        resetError()
+                      }
+                )
+            }
         }
     }
     
     func updateDeviceFavoriteStatus() {
         let result = PersistenceController.shared
             .updateObjectFavoriteStatus(withId: deviceId, withFavoriteStatus: !deviceFavorited)
-        if !result {
-            Logger.print("Error updating favorite status for device")
+        
+        switch result {
+        case .success(_):
+            // Pass; no nothing
+            break
+            
+        case .failure(let error):
+            errorTitle = "Error"
+            errorMessage = "Error updating 'favorite' status for device. \(error)"
+            showErrorAlert = true
+            break
         }
     }
     
@@ -172,6 +193,13 @@ struct DeviceRow: View {
         
         return name
     }
+    
+    func resetError() {
+        showErrorAlert = false
+        errorTitle = ""
+        errorMessage = ""
+    }
+    
 }
 
 struct PrimaryView_Previews: PreviewProvider {
