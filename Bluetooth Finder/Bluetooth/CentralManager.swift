@@ -22,12 +22,34 @@ class CentralManager: NSObject, ObservableObject {
     @Published public var rssiReadings: [UUID: Int] = [:]
         
     @Published public var isScanning: Bool = false
+    
+    private var stopped: Bool = false
         
     private var rssiTimers: [Timer] = []
         
-    func start() {
+    func create() {
         if centralManager == nil {
             centralManager = .init(CBCentralManager(delegate: self, queue: .main))
+        }
+    }
+    
+    func resume() {
+        stopped = false
+        
+        self.startScanning()
+    }
+    
+    func stop() {
+        stopped = true
+
+        self.stopScanning()
+        
+        for device in devices {
+            centralManager.cancelPeripheralConnection(device)
+        }
+
+        for timer in rssiTimers {
+            timer.invalidate()
         }
     }
     
@@ -86,8 +108,12 @@ class CentralManager: NSObject, ObservableObject {
         return peripheral.name ?? peripheral.identifier.uuidString
     }
     
+    func isPoweredOn() -> Bool {
+        return self.centralManager.state == CBManagerState.poweredOn
+    }
+    
     func startScanning() {
-        if !isScanning {
+        if !isScanning && isPoweredOn() {
             // We may end up with duplicate devices if we don't reset these variables at the start of each scan
             devices = []
             
@@ -207,6 +233,10 @@ extension CentralManager: CBPeripheralDelegate {
 extension CentralManager: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         Logger.print("[CBCentralManagerDelegate] CentralManager state updated to \(translateState(central.state))")
+        
+        if central.state == CBManagerState.poweredOn {
+            self.startScanning()
+        }
     }
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
@@ -230,8 +260,10 @@ extension CentralManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         Logger.print("[CBCentralManagerDelegate] Disconnected from peripheral: \(getPeripheralName(peripheral))")
         
-        Logger.print("[CBCentralManagerDelegate] Attempting to re-connect to peripheral")
-        self.connectToDevice(peripheral)
+        if !stopped {
+            Logger.print("[CBCentralManagerDelegate] Attempting to re-connect to peripheral")
+            self.connectToDevice(peripheral)
+        }
     }
     
 }

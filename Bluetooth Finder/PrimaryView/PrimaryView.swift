@@ -11,8 +11,9 @@ import CoreBluetooth
 
 struct PrimaryView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.scenePhase) private var scenePhase
     
-    @StateObject var centralManager: CentralManager = CentralManager()
+    @EnvironmentObject var centralManager: CentralManager
         
     @State var searchText: String = ""
 
@@ -22,11 +23,6 @@ struct PrimaryView: View {
                 BackgroundColor()
                 
                 VStack {
-                    StateButton(state: $centralManager.isScanning,
-                                activeText: "Stop Scanning",
-                                inactiveText: "Start Scanning",
-                                action: updateScanState)
-                    
                     DevicesList(devices: $centralManager.devices,
                                 rssiReadings: $centralManager.rssiReadings,
                                 searchText: $searchText)
@@ -35,16 +31,15 @@ struct PrimaryView: View {
             }
         }
         .onAppear {
-            centralManager.start()
+            centralManager.create()
         }
-    }
-    
-    func updateScanState() {
-        if centralManager.isScanning {
-            centralManager.stopScanning()
-        }
-        else {
-            centralManager.startScanning()
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                centralManager.resume()
+            }
+            else if newPhase == .background {
+                centralManager.stop()
+            }
         }
     }
 }

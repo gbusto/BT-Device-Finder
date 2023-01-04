@@ -10,11 +10,14 @@ import SwiftUI
 @main
 struct Bluetooth_FinderApp: App {
     let persistenceController = PersistenceController.shared
+    
+    @StateObject var centralManager: CentralManager = CentralManager()
 
     var body: some Scene {
         WindowGroup {
             PrimaryView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environmentObject(centralManager)
         }
     }
 }
