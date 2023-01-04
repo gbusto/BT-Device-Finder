@@ -10,15 +10,16 @@ import CoreData
 import CoreBluetooth
 
 struct PrimaryView: View {
+    @Environment(\.managedObjectContext) private var viewContext
     
     @StateObject var centralManager: CentralManager = CentralManager()
-    
+        
     @State var searchText: String = ""
 
     var body: some View {
         NavigationStack {
             ZStack {
-                LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
+                BackgroundColor()
                 
                 VStack {
                     StateButton(state: $centralManager.isScanning,
@@ -29,8 +30,8 @@ struct PrimaryView: View {
                     DevicesList(devices: $centralManager.devices,
                                 rssiReadings: $centralManager.rssiReadings,
                                 searchText: $searchText)
+                        .environmentObject(centralManager)
                 }
-                .environmentObject(centralManager)
             }
         }
         .onAppear {
@@ -50,27 +51,30 @@ struct PrimaryView: View {
 
 struct DevicesList: View {
     @EnvironmentObject var btManager: CentralManager
+    
     @Binding var devices: Set<CBPeripheral>
     @Binding var rssiReadings: [UUID: Int]
+    
+    @FetchRequest(sortDescriptors: []) var savedDevices: FetchedResults<Device>
     
     @Binding var searchText: String
     
     var body: some View {
         ScrollView {
-            ForEach(Array(devices), id: \.self) { device in
+            ForEach(Array(devices) as [CBPeripheral], id: \.self) { device in
                 let deviceId = device.identifier
-                let deviceName = device.name ?? "Unknown"
+                let deviceName = getDeviceName(device)
+                
+                let deviceRow = DeviceRow(deviceId: deviceId,
+                                          deviceName: deviceName,
+                                          rssi: getRssiForPeripheral(deviceId))
                 if !searchText.isEmpty {
                     if deviceName.lowercased().contains(searchText.lowercased()) {
-                        DeviceRow(deviceId: deviceId,
-                                  deviceName: deviceName,
-                                  rssi: getRssiForPeripheral(device.identifier))
+                        deviceRow
                     }
                 }
                 else {
-                    DeviceRow(deviceId: deviceId,
-                              deviceName: deviceName,
-                              rssi: getRssiForPeripheral(device.identifier))
+                    deviceRow
                 }
             }
         }
@@ -85,6 +89,29 @@ struct DevicesList: View {
         
         return 0
     }
+    
+    func getDeviceName(_ device: CBPeripheral) -> String {
+        var deviceName: String = device.name ?? "Unknown"
+        
+        if let item = savedDevices.first(where: { $0.id == device.identifier }) {
+            if let cn = item.customName {
+                if !cn.isEmpty {
+                    deviceName = cn
+                }
+            }
+        }
+
+        return deviceName
+    }
+    
+    func checkIfDeviceWasSaved(_ deviceId: UUID) {
+        if let item = PersistenceController.shared.getObjectWithId(deviceId) {
+            debugPrint("Got item! Custom name is \(String(describing: item.value(forKey: "customName") as? String))")
+        }
+        else {
+            print("No item found for ID \(deviceId.uuidString)")
+        }
+    }
 
 }
 
@@ -97,8 +124,10 @@ struct DeviceRow: View {
     var maxStringLength: Int = 20
     
     var body: some View {
-        NavigationLink(destination: PeripheralView(deviceId: deviceId,
-                                                   deviceName: deviceName).environmentObject(btManager)) {
+        NavigationLink(destination: PeripheralView(customDeviceName: deviceName,
+                                                   deviceId: deviceId,
+                                                   deviceName: deviceName)
+                .environmentObject(btManager)) {
             ZStack {
                 Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
                 
@@ -135,7 +164,6 @@ struct DeviceRow: View {
         return name
     }
 }
-
 
 struct PrimaryView_Previews: PreviewProvider {
     static var previews: some View {

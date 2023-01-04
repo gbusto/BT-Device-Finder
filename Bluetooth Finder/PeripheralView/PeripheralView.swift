@@ -13,6 +13,10 @@ struct PeripheralView: View {
     
     @EnvironmentObject public var centralManager: CentralManager
     
+    @State public var customDeviceName: String = ""
+
+    @State private var showEditView: Bool = false
+    
     public var deviceId: UUID
     public var deviceName: String
         
@@ -20,9 +24,16 @@ struct PeripheralView: View {
                 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
+            BackgroundColor()
             
             VStack {
+                Text("\(deviceName)")
+                    .foregroundColor(.white)
+                    .fontWeight(.bold)
+                    .font(.largeTitle)
+                
+                Spacer()
+                
                 RssiView(deviceId: deviceId,
                          rssiReadings: $centralManager.rssiReadings,
                          rssiHelper: rssiHelper)
@@ -30,11 +41,54 @@ struct PeripheralView: View {
                 PeripheralConnectionView(isConnected: centralManager.isConnectedToDevice(deviceId))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
+                
+                Spacer()
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    
+                    Button {
+                        print("Edit")
+                        showEditView = !showEditView
+                    } label: {
+                        Label("", systemImage: "square.and.pencil")
+                    }
+                    .alert("Edit device name", isPresented: $showEditView, actions: {
+                        TextField("Custom device name", text: $customDeviceName)
+                        
+                        Button("Save", action: saveName)
+                        Button("Cancel", role: .cancel, action: {})
+                    })
+                }
             }
         }
-        .navigationTitle("\(deviceName)")
         .onAppear {
             centralManager.requestFullDiscovery(forPeripheralWithId: deviceId)
+        }
+    }
+    
+    func saveName() {
+        PersistenceController.shared.updateObjectWithId(deviceId, customDeviceName)
+    }
+}
+
+struct EditView: View {
+    @State var customName: String = ""
+    
+    var body: some View {
+        ZStack {
+            BackgroundColor()
+            
+            ScrollView {
+                VStack {
+                    TextField("Custom device name", text: $customName)
+                        .font(.title)
+                        .background(Color.gray)
+                        .cornerRadius(5.0)
+                        .shadow(radius: 5.0)
+                }
+                .padding()
+            }
         }
     }
 }
@@ -70,5 +124,14 @@ struct RssiView: View {
         }
         
         return 0
+    }
+}
+
+struct PeripheralView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            PeripheralView(deviceId: UUID(), deviceName: "Test Device")
+                .environmentObject(CentralManager())
+        }
     }
 }

@@ -4,7 +4,6 @@
 //
 //  Created by Gabriel Busto on 12/24/22.
 //
-
 import CoreData
 
 struct PersistenceController {
@@ -39,7 +38,6 @@ struct PersistenceController {
             if let error = error as NSError? {
                 // Replace this implementation with code to handle the error appropriately.
                 // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
                 /*
                  Typical reasons for an error here include:
                  * The parent directory does not exist, cannot be created, or disallows writing.
@@ -52,5 +50,57 @@ struct PersistenceController {
             }
         })
         container.viewContext.automaticallyMergesChangesFromParent = true
+    }
+    
+    func getObjectWithId(_ deviceId: UUID) -> NSManagedObject? {
+        let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: "Device")
+        fetchRequest.predicate = NSPredicate(format: "id == %@", deviceId as CVarArg)
+        
+        do {
+            let items = try container.viewContext.fetch(fetchRequest)
+            return items.first
+        } catch let error as NSError {
+            print("Could not fetch data: \(error)\n\(error.userInfo)")
+        }
+        
+        return nil
+    }
+    
+    func createObject(_ deviceId: UUID, _ deviceName: String) -> Bool {
+        let context = container.viewContext
+        
+        let newItem = Device(context: context)
+        newItem.id = deviceId
+        newItem.customName = deviceName
+        
+        do {
+            try context.save()
+            return true
+        }
+        catch {
+            let nsError = error as NSError
+            print("[!] Error creating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
+            return false
+        }
+    }
+    
+    func updateObjectWithId(_ deviceId: UUID, _ deviceName: String) -> Bool {
+        let context = container.viewContext
+
+        if let item = self.getObjectWithId(deviceId) {
+            item.setValue(deviceName, forKey: "customName")
+            
+            do {
+                try context.save()
+                return true
+            }
+            catch {
+                let nsError = error as NSError
+                print("[!] Error updating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
+                return false
+            }
+        }
+        
+        return self.createObject(deviceId, deviceName)
     }
 }

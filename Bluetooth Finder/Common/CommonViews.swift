@@ -33,3 +33,9 @@ struct AppButton: View {
             .foregroundColor(.blue)
     }
 }
+
+struct BackgroundColor: View {
+    var body: some View {
+        LinearGradient(colors: [.bgDark1, .bgDark2], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
+    }
+}

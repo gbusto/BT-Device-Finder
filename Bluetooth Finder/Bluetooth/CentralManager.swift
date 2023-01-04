@@ -8,6 +8,12 @@
 import Foundation
 import CoreBluetooth
 
+struct DeviceModel: Identifiable {
+    var id: UUID { deviceId }
+    var deviceId: UUID
+    var deviceName: String
+}
+
 class CentralManager: NSObject, ObservableObject {
     
     public var centralManager: CBCentralManager!
@@ -50,6 +56,18 @@ class CentralManager: NSObject, ObservableObject {
         }
         
         return nil
+    }
+    
+    func getDevices() -> [DeviceModel] {
+        var devList: [DeviceModel] = []
+        
+        for dev in devices {
+            let d = DeviceModel(deviceId: dev.identifier,
+                                deviceName: dev.name ?? "Unknown")
+            devList.append(d)
+        }
+        
+        return devList
     }
     
     func connectToDevice(_ peripheral: CBPeripheral) {
