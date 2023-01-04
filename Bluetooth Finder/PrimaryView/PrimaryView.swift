@@ -134,10 +134,12 @@ struct DeviceRow: View {
                 Color(cgColor: CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
                 
                 HStack {
-                    Image(deviceFavorited ? "star-filled" : "star-empty")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: 30)
+                    Button(action: updateDeviceFavoriteStatus) {
+                        Image(deviceFavorited ? "star-filled" : "star-empty")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: 30)
+                    }
                     
                     Spacer()
                     
@@ -154,6 +156,14 @@ struct DeviceRow: View {
                 .padding()
             }
             .cornerRadius(15)
+        }
+    }
+    
+    func updateDeviceFavoriteStatus() {
+        let result = PersistenceController.shared
+            .updateObjectFavoriteStatus(withId: deviceId, withFavoriteStatus: !deviceFavorited)
+        if !result {
+            print("Error updating favorite status for device")
         }
     }
     

@@ -84,7 +84,7 @@ struct PeripheralView: View {
             .updateObjectName(withId: deviceId,
                               withName: customDeviceName)
         if !result {
-            print("Error update custom name for device")
+            print("Error updating custom name for device")
         }
     }
     
@@ -95,7 +95,7 @@ struct PeripheralView: View {
             .updateObjectFavoriteStatus(withId: deviceId,
                                         withFavoriteStatus: deviceFavorited)
         if !result {
-            print("Error update favorite status for device")
+            print("Error updating favorite status for device")
         }
     }
 }
