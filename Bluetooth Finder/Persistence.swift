@@ -60,13 +60,13 @@ struct PersistenceController {
             let items = try container.viewContext.fetch(fetchRequest)
             return items.first
         } catch let error as NSError {
-            print("Could not fetch data: \(error)\n\(error.userInfo)")
+            Logger.print("Could not fetch data: \(error)\n\(error.userInfo)")
         }
         
         return nil
     }
     
-    func createObject(withId deviceId: UUID, withName deviceName: String, favorited favorited: Bool = true) -> Bool {
+    func createObject(withId deviceId: UUID, withName deviceName: String, favorited: Bool = true) -> Bool {
         let context = container.viewContext
         
         let newItem = Device(context: context)
@@ -80,7 +80,7 @@ struct PersistenceController {
         }
         catch {
             let nsError = error as NSError
-            print("[!] Error creating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
+            Logger.print("[!] Error creating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
             return false
         }
     }
@@ -97,7 +97,7 @@ struct PersistenceController {
             }
             catch {
                 let nsError = error as NSError
-                print("[!] Error updating device with ID \(deviceId.uuidString) and status \(status) - \(nsError), \(nsError.userInfo)")
+                Logger.print("[!] Error updating device with ID \(deviceId.uuidString) and status \(status) - \(nsError), \(nsError.userInfo)")
                 return false
             }
         }
@@ -117,7 +117,7 @@ struct PersistenceController {
             }
             catch {
                 let nsError = error as NSError
-                print("[!] Error updating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
+                Logger.print("[!] Error updating device with ID \(deviceId.uuidString) and name \(deviceName) - \(nsError), \(nsError.userInfo)")
                 return false
             }
         }

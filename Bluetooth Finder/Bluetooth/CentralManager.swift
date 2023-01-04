@@ -191,7 +191,6 @@ extension CentralManager: CBPeripheralDelegate {
         Logger.print("[CBPeripheralDelegate] - TESTING - Did discover services for peripheral \(getPeripheralName(peripheral))")
         
         if let services = peripheral.services {
-            print(services)
             for s in services {
                 Logger.print("[CBPeripheralDelegate] - TESTING - SERVICE - \(s.uuid)")
                 peripheral.discoverCharacteristics([], for: s)

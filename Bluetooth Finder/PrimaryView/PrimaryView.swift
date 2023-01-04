@@ -158,7 +158,7 @@ struct DeviceRow: View {
         let result = PersistenceController.shared
             .updateObjectFavoriteStatus(withId: deviceId, withFavoriteStatus: !deviceFavorited)
         if !result {
-            print("Error updating favorite status for device")
+            Logger.print("Error updating favorite status for device")
         }
     }
     
