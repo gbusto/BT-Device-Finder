@@ -10,7 +10,6 @@ import SwiftUI
 import CoreBluetooth
 
 struct PeripheralView: View {
-    
     @EnvironmentObject public var centralManager: CentralManager
     
     @State public var deviceFavorited: Bool

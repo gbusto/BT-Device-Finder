@@ -23,6 +23,8 @@ class CentralManager: NSObject, ObservableObject {
         
     @Published public var isScanning: Bool = false
     
+    @Published public var isAuthorized: Bool = true
+    
     private var stopped: Bool = false
         
     private var rssiTimers: [Timer] = []
@@ -233,8 +235,17 @@ extension CentralManager: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         Logger.print("[CBCentralManagerDelegate] CentralManager state updated to \(translateState(central.state))")
         
-        if central.state == CBManagerState.poweredOn {
-            self.startScanning()
+        if central.state == CBManagerState.unauthorized {
+            self.isAuthorized = false
+            
+            self.stop()
+        }
+        else {
+            if central.state == CBManagerState.poweredOn {
+                self.resume()
+            }
+
+            self.isAuthorized = true
         }
     }
     

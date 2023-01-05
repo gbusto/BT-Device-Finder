@@ -22,11 +22,20 @@ struct PrimaryView: View {
             ZStack {
                 BackgroundColor()
                 
-                VStack {
-                    DevicesList(devices: $centralManager.devices,
-                                rssiReadings: $centralManager.rssiReadings,
-                                searchText: $searchText)
+                if !centralManager.isAuthorized {
+                    Text("Error: this app isn't authorized to use Bluetooth. Please update your settings to allow this app to use Bluetooth.")
+                        .foregroundColor(.red)
+                        .font(.title2)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+                else {
+                    VStack {
+                        DevicesList(devices: $centralManager.devices,
+                                    rssiReadings: $centralManager.rssiReadings,
+                                    searchText: $searchText)
                         .environmentObject(centralManager)
+                    }
                 }
             }
         }
