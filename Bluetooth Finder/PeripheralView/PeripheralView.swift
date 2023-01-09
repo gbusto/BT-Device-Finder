@@ -39,13 +39,18 @@ struct PeripheralView: View {
                 
                 Spacer()
                 
-                RssiView(deviceId: deviceId,
-                         rssiReadings: $centralManager.rssiReadings,
-                         rssiHelper: rssiHelper)
-                
-                PeripheralConnectionView(isConnected: centralManager.isConnectedToDevice(deviceId))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
+                Image(rssiHelper
+                        .getImageNameFor(getRssiForPeripheral(deviceId)))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 250)
+                                
+                if centralManager.isConnectedToDevice(deviceId) {
+                    Text("Successfully connected to device!")
+                }
+                else {
+                    Text("Unable to connect to device")
+                }
                 
                 Spacer()
             }
@@ -76,6 +81,7 @@ struct PeripheralView: View {
                     })
                 }
             }
+            // I'd like to fix this and remove the reliance on these attributes to show an error
             .alert(isPresented: $showErrorAlert) {
                 Alert(title: Text(errorTitle),
                       message: Text(errorMessage),
@@ -131,61 +137,15 @@ struct PeripheralView: View {
         errorTitle = ""
         errorMessage = ""
     }
-}
-
-struct EditView: View {
-    @State var customName: String = ""
-    
-    var body: some View {
-        ZStack {
-            BackgroundColor()
-            
-            ScrollView {
-                VStack {
-                    TextField("Custom device name", text: $customName)
-                        .font(.title)
-                        .background(Color.gray)
-                        .cornerRadius(5.0)
-                        .shadow(radius: 5.0)
-                }
-                .padding()
-            }
-        }
-    }
-}
-
-struct PeripheralConnectionView: View {
-    var isConnected: Bool
-    
-    var body: some View {
-        if isConnected {
-            Text("Successfully connected to device!")
-        }
-        else {
-            Text("Unable to connect to device")
-        }
-    }
-}
-
-struct RssiView: View {
-    var deviceId: UUID
-    @Binding var rssiReadings: [UUID: Int]
-    var rssiHelper: RssiHelper
-    
-    var body: some View {
-        Image(rssiHelper.getImageNameFor(getRssiForPeripheral(deviceId)))
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(maxWidth: 250)
-    }
     
     func getRssiForPeripheral(_ deviceId: UUID) -> Int {
-        if let rssi = rssiReadings[deviceId] {
+        if let rssi = centralManager.rssiReadings[deviceId] {
             return rssi
         }
         
         return 0
     }
+
 }
 
 struct PeripheralView_Previews: PreviewProvider {
