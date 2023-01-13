@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 import CoreBluetooth
 
 struct DeviceModel: Identifiable {
@@ -16,6 +17,8 @@ struct DeviceModel: Identifiable {
 
 class CentralManager: NSObject, ObservableObject {
     
+    static let shared = CentralManager()
+    
     public var centralManager: CBCentralManager!
     
     @Published public var devices: Set<CBPeripheral> = []
@@ -25,6 +28,21 @@ class CentralManager: NSObject, ObservableObject {
     
     @Published public var isAuthorized: Bool = true
     
+    private var stateSubject = PassthroughSubject<CBManagerState, Never>()
+    public var statePublisher: AnyPublisher<CBManagerState, Never> {
+        stateSubject.eraseToAnyPublisher()
+    }
+    
+    private var connectSubject = PassthroughSubject<CBPeripheral, Never>()
+    public var connectPublisher: AnyPublisher<CBPeripheral, Never> {
+        connectSubject.eraseToAnyPublisher()
+    }
+    
+    private var disconnectSubject = PassthroughSubject<CBPeripheral, Never>()
+    public var disconnectPublisher: AnyPublisher<CBPeripheral, Never> {
+        disconnectSubject.eraseToAnyPublisher()
+    }
+        
     private var stopped: Bool = false
         
     private var rssiTimers: [Timer] = []
@@ -174,12 +192,6 @@ class CentralManager: NSObject, ObservableObject {
         
         return false
     }
-    
-    func requestFullDiscovery(forPeripheralWithId deviceId: UUID) {
-        if let peripheral = getPeripheralById(deviceId) {
-            peripheral.discoverServices([])
-        }
-    }
 }
 
 extension CentralManager: CBPeripheralDelegate {
@@ -188,63 +200,18 @@ extension CentralManager: CBPeripheralDelegate {
 
         rssiReadings[peripheral.identifier] = RSSI.intValue
     }
-    
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        Logger.print("[CBPeripheralDelegate] - TESTING - Did discover services for peripheral \(getPeripheralName(peripheral))")
-        
-        if let services = peripheral.services {
-            for s in services {
-                Logger.print("[CBPeripheralDelegate] - TESTING - SERVICE - \(s.uuid)")
-                peripheral.discoverCharacteristics([], for: s)
-            }
-        }
-        else {
-            Logger.print("[CBPeripheralDelegate] - TESTING - [!] .services is empty for peripheral \(getPeripheralName(peripheral))")
-        }
-    }
-    
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        Logger.print("[CBPeripheralDelegate] - TESTING - Did discover characteristics for service \(service.uuid) on peripheral \(getPeripheralName(peripheral))")
-
-        if let characteristics = service.characteristics {
-            for ch in characteristics {
-                Logger.print("[CBPeripheralDelegate] - TESTING - CHARACTERISTIC - \(ch.uuid), \(ch.value ?? "NIL".data(using: .utf8)!), \(ch.properties)")
-                peripheral.discoverDescriptors(for: ch)
-            }
-        }
-        else {
-            Logger.print("[CBPeripheralDelegate] - TESTING - [!] .characteristics is empty for service \(service.uuid) on peripheral \(getPeripheralName(peripheral))")
-        }
-    }
-    
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverDescriptorsFor characteristic: CBCharacteristic, error: Error?) {
-        Logger.print("[CBPeripheralDelegate] - TESTING - Did discover descriptors for characteristic \(characteristic.uuid) on peripheral \(getPeripheralName(peripheral))")
-
-        if let descriptors = characteristic.descriptors {
-            for d in descriptors {
-                Logger.print("[CBPeripheralDelegate] - TESTING - DESCRIPTOR - \(d.uuid), \(d.value ?? "NIL")")
-            }
-        }
-        else {
-            Logger.print("[CBPeripheralDelegate] - TESTING - [!] .descriptors is empty for characteristic \(characteristic.uuid) on peripheral \(getPeripheralName(peripheral))")
-        }
-    }
 }
 
 extension CentralManager: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         Logger.print("[CBCentralManagerDelegate] CentralManager state updated to \(translateState(central.state))")
         
+        stateSubject.send(central.state)
+        
         if central.state == CBManagerState.unauthorized {
             self.isAuthorized = false
-            
-            self.stop()
         }
         else {
-            if central.state == CBManagerState.poweredOn {
-                self.resume()
-            }
-
             self.isAuthorized = true
         }
     }
@@ -253,7 +220,7 @@ extension CentralManager: CBCentralManagerDelegate {
         Logger.print("[CBPeripheralDelegate] Successfully connected to peripheral \(getPeripheralName(peripheral))")
         peripheral.delegate = self
 
-        self.startMonitoringRssi(peripheral)
+        connectSubject.send(peripheral)
     }
     
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -270,10 +237,7 @@ extension CentralManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         Logger.print("[CBCentralManagerDelegate] Disconnected from peripheral: \(getPeripheralName(peripheral))")
         
-        if !stopped {
-            Logger.print("[CBCentralManagerDelegate] Attempting to re-connect to peripheral")
-            self.connectToDevice(peripheral)
-        }
+        disconnectSubject.send(peripheral)
     }
     
 }

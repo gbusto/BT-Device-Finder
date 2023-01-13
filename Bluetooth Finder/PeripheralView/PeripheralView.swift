@@ -91,9 +91,6 @@ struct PeripheralView: View {
                 )
             }
         }
-        .onAppear {
-            centralManager.requestFullDiscovery(forPeripheralWithId: deviceId)
-        }
     }
     
     func updateName() {

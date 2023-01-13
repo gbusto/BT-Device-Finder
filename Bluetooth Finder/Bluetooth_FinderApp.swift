@@ -11,7 +11,9 @@ import SwiftUI
 struct Bluetooth_FinderApp: App {
     let persistenceController = PersistenceController.shared
     
-    @StateObject var centralManager: CentralManager = CentralManager()
+    var orchestrator = Orchestrator()
+    
+    @StateObject var centralManager: CentralManager = CentralManager.shared
 
     var body: some Scene {
         WindowGroup {

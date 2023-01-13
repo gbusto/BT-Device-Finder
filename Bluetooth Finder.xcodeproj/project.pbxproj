@@ -11,6 +11,7 @@
 		0304EEFD296492BA0078D287 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0304EEFC296492BA0078D287 /* Persistence.swift */; };
 		03ACEF69295F078D0097F487 /* CommonColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ACEF68295F078D0097F487 /* CommonColors.swift */; };
 		03ACEF6B295F09E20097F487 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ACEF6A295F09E20097F487 /* Logger.swift */; };
+		03C00B232970CA3F00C7B220 /* Orchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C00B222970CA3F00C7B220 /* Orchestrator.swift */; };
 		03FB35AE295791AE00322BA4 /* Bluetooth_FinderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FB35AD295791AE00322BA4 /* Bluetooth_FinderApp.swift */; };
 		03FB35B0295791AE00322BA4 /* PrimaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03FB35AF295791AE00322BA4 /* PrimaryView.swift */; };
 		03FB35B2295791B000322BA4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 03FB35B1295791B000322BA4 /* Assets.xcassets */; };
@@ -46,6 +47,7 @@
 		0304EEFC296492BA0078D287 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		03ACEF68295F078D0097F487 /* CommonColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonColors.swift; sourceTree = "<group>"; };
 		03ACEF6A295F09E20097F487 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		03C00B222970CA3F00C7B220 /* Orchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Orchestrator.swift; sourceTree = "<group>"; };
 		03FB35AA295791AE00322BA4 /* Bluetooth Finder.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bluetooth Finder.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		03FB35AD295791AE00322BA4 /* Bluetooth_FinderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bluetooth_FinderApp.swift; sourceTree = "<group>"; };
 		03FB35AF295791AE00322BA4 /* PrimaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimaryView.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 			children = (
 				03FB35E02958B0CB00322BA4 /* RssiHelper.swift */,
 				03FB35DC295791DB00322BA4 /* CentralManager.swift */,
+				03C00B222970CA3F00C7B220 /* Orchestrator.swift */,
 			);
 			path = Bluetooth;
 			sourceTree = "<group>";
@@ -315,6 +318,7 @@
 			files = (
 				03ACEF69295F078D0097F487 /* CommonColors.swift in Sources */,
 				0304EEF42963464C0078D287 /* CommonViews.swift in Sources */,
+				03C00B232970CA3F00C7B220 /* Orchestrator.swift in Sources */,
 				0304EEFD296492BA0078D287 /* Persistence.swift in Sources */,
 				03FB35B0295791AE00322BA4 /* PrimaryView.swift in Sources */,
 				03FB35E12958B0CB00322BA4 /* RssiHelper.swift in Sources */,
